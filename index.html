@@ -6,15 +6,88 @@
     <title>Notion Web Clipboard</title>
 </head>
 <body>
-    <div id="app"></div>
+    <pre style="background-color: black; color: white;"><code id="code"></code></pre>
+    <p>Copied to clipboard.</div>
     <script type="text/javascript" lang="javascript">
-        const searchParams = new URLSearchParams(location.search)
-        if (searchParams.has("text")) {
-            navigator.clipboard.writeText(decodeURIComponent(searchParams.get("text")))
-            app.innerHTML = "Copied to clipboard."
-        } else {
-            app.innerHTML = "Nothing to copy."
+        function stripJsonComments(jsonc) {
+            let output = "";
+
+            let inString = false;
+            let inSingleComment = false;
+            let inMultiComment = false;
+
+            for (let i = 0; i < jsonc.length; i++) {
+                const char = jsonc[i];
+                const nextChar = jsonc[i + 1];
+
+                // Currently inside a single-line comment (//)
+                if (inSingleComment) {
+                    if (char === "\n" || char === "\r") {
+                        inSingleComment = false;
+                        output += char; // Keep the newline to preserve line numbers for errors
+                    }
+                
+                    continue;
+                }
+
+                // Currently inside a multi-line comment (/* */)
+                if (inMultiComment) {
+                    if (char === "*" && nextChar === "/") {
+                        inMultiComment = false;
+                        i++; // Skip the closing '/'
+                    }
+
+                    continue;
+                }
+
+                // Currently inside a valid JSON string literal
+                if (inString) {
+                    output += char;
+
+                    // Handle escaped quotes (\") so they don't prematurely close the string
+                    if (char === "\\") {
+                        output += nextChar;
+                        i++;
+                    } else if (char === '"') {
+                        inString = false;
+                    }
+
+                    continue;
+                }
+
+                // Outside of strings and comments
+                if (char === '"') {
+                    inString = true;
+                    output += char;
+                } else if (char === "/" && nextChar === "/") {
+                    inSingleComment = true;
+                    i++; // Skip the second '/'
+                } else if (char === "/" && nextChar === "*") {
+                    inMultiComment = true;
+                    i++; // Skip the '*'
+                } else {
+                    output += char; // Safe JSON syntax character
+                }
+            }
+
+            return output;
         }
+
+        const searchParams = new URLSearchParams(location.search)
+
+        let text = ""
+
+        if (searchParams.has("text")) {
+            text = decodeURIComponent(searchParams.get("text"))
+        }
+
+        if (searchParams.has("action") && searchParams.get("action") == "jsonc-to-json") {
+            text = JSON.stringify(JSON.parse(stripJsonComments(text)), null, 2)
+        }
+
+        navigator.clipboard.writeText(text)
+
+        code.textContent = text
     </script>
 </body>
 </html>
