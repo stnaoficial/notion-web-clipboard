@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Web Clipboard</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script type="text/javascript" lang="javascript">
+        const searchParams = new URLSearchParams(location.search)
+        if (searchParams.has("text")) {
+            navigator.clipboard.writeText(decodeURIComponent(searchParams.get("text")))
+            app.innerHTML = "Copied to clipboard."
+        } else {
+            app.innerHTML = "Nothing to copy."
+        }
+    </script>
+</body>
+</html>
